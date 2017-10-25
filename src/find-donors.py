@@ -6,11 +6,11 @@ import sys
 from collections import OrderedDict
 import math
 
-new things
-def main():
+def main(args):
     d=OrderedDict()
     dd=OrderedDict()
-    with open('itcont.txt','rb+') as f:
+    inputFile=args[1]
+    with open(inputFile,'rb+') as f:
         reader=csv.reader(f)
         for line in reader:
             #lineAsStr=" ".join(line)
@@ -20,7 +20,7 @@ def main():
                 CMTE_ZIP=(ReqFields[0],ReqFields[1])
                 d=update_Dict(d,ReqFields,CMTE_ZIP)
                 currMedian=median(d[CMTE_ZIP][2])
-                with open("medianvals_by_zip.txt","a+") as ff:
+                with open(args[2]+'/medianvals_by_zip.txt',"a+") as ff:
                     ff.write("%s|" % str(CMTE_ZIP[0]))
                     ff.write("%s|" % str(CMTE_ZIP[1]))
                     ff.write("%s|" % str(currMedian))
@@ -31,7 +31,7 @@ def main():
                 CMTE_DT=(ReqFields[0],ReqFields[2])
                 dd=update_Dict(dd,ReqFields,CMTE_DT)
     f.close()  
-    with open("medianvals_by_date.txt","a+") as ff:
+    with open(args[2]+'/medianvals_by_date.txt',"a+") as ff:
         for rec_DT in dd:
             ff.write("%s|" % str(rec_DT[0]))
             ff.write("%s|" % str(rec_DT[1]))
@@ -81,4 +81,5 @@ def medianInPlace(l):
     return int(math.ceil(l[half - 1] + l[half] / 2.0))
 
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": 
+    main(sys.argv)
