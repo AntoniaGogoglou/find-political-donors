@@ -16,32 +16,36 @@ def main(args):
             #lineAsStr=" ".join(line)
             #fields = lineAsStr.split('|')
             ReqFields, flag=stream_Line_to_Fields(line)
-            if flag==1:
+            ##if line valid and zip valid
+            if flag==1 and (ReqFields[1] is not '00000'):
                 CMTE_ZIP=(ReqFields[0],ReqFields[1])
                 d=update_Dict(d,ReqFields,CMTE_ZIP)
                 currMedian=median(d[CMTE_ZIP][2])
                 with open(args[2]+'/medianvals_by_zip.txt',"a+") as ff:
-                    ff.write("%s|" % str(CMTE_ZIP[0]))
-                    ff.write("%s|" % str(CMTE_ZIP[1]))
+                    ff.write("%s|" % CMTE_ZIP[0])
+                    ff.write("%s|" % CMTE_ZIP[1])
                     ff.write("%s|" % str(currMedian))
                     ff.write("%s|" % str(d[CMTE_ZIP][1]))
                     ff.write("%s" % str(d[CMTE_ZIP][0]))
                     ff.write("\n")
                 ff.close()
+            ##if line valid and DT valid
+            if flag==1 and (ReqFields[2] is not '00000000'):
                 CMTE_DT=(ReqFields[0],ReqFields[2])
                 dd=update_Dict(dd,ReqFields,CMTE_DT)
-    f.close()  
+    f.close() 
+    ddSorted=OrderedDict(sorted(dd.items(), key=lambda key: key[0:1])) 
     with open(args[2]+'/medianvals_by_date.txt',"a+") as ff:
-        for rec_DT in dd:
-            ff.write("%s|" % str(rec_DT[0]))
-            ff.write("%s|" % str(rec_DT[1]))
-            ff.write("%s|" % str(median(dd[rec_DT][2])))
-            ff.write("%s|" % str(dd[rec_DT][1]))
-            ff.write("%s" % str(dd[rec_DT][0])) 
+        for rec_DT in ddSorted:
+            ff.write("%s|" % rec_DT[0])
+            ff.write("%s|" % rec_DT[1])
+            ff.write("%s|" % str(median(ddSorted[rec_DT][2])))
+            ff.write("%s|" % str(ddSorted[rec_DT][1]))
+            ff.write("%s" % str(ddSorted[rec_DT][0])) 
             ff.write("\n")
     ff.close()
     
-## ID and ZIP are strings, the rest are int
+## ID, ZIP and DT are strings, the rest are int
 def stream_Line_to_Fields(line):
     lineAsStr=" ".join(line)
     fields = lineAsStr.split('|')
@@ -49,8 +53,17 @@ def stream_Line_to_Fields(line):
     flag=0
     ReqFields=[]
     if not fields[15]:
-        ReqFields=[fields[0],fields[10][0:5],int(fields[13]),int(fields[14])]
-        flag=1
+        if fields[0] and fields[14]:
+            if fields[13]:
+                month=fields[13][:2]
+                day=fields[13][2:4]
+                year=fields[13][4:]
+            if not fields[13] or int(month)>12 or int(month)<1 or int(day)>31 or int(day)<1 or int(year)>2018 or int(year)<1900:
+                fields[13]='00000000'
+            if not fields[10] or len(fields[10])<5:
+                fields[10]='00000'
+            ReqFields=[fields[0],fields[10][0:5],fields[13],int(fields[14])]
+            flag=1
     return ReqFields, flag
 
 def update_Dict(d,ReqFields,tuple_key):
@@ -72,6 +85,7 @@ def median(l):
     return int(math.ceil((sortL[half - 1] + sortL[half]) / 2.0))
 
 ##when using this then the list in the dictionary will be updated sorted!
+##better space complexity because the list is sorted in place, but could cause debugging issues due to mutation
 def medianInPlace(l):
     ##Calculate median of the given list.
     l.sort()
